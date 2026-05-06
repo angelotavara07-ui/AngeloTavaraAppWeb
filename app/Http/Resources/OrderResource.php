@@ -13,7 +13,21 @@ class OrderResource extends JsonResource
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
-    {
-        return parent::toArray($request);
-    }
+{
+    return [
+        'id' => $this->id,
+        'client_id' => $this->client_id,
+        'order_date' => $this->order_date,
+        'subtotal' => $this->subtotal,
+        'tax' => $this->tax,
+        'total' => $this->total,
+        'status' => $this->status,
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+
+        // 🔥 RELACIÓN
+        'client' => $this->whenLoaded('client'),
+        'products' => $this->whenLoaded('products'),
+    ];
+}
 }

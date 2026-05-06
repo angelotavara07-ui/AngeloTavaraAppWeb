@@ -3,47 +3,75 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Order;
+use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\UpdateOrderRequest;
+use App\Http\Resources\OrderResource;
 
 class OrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $orders = Order::with('client')->get();
+        return OrderResource::collection($orders);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function store(StoreOrderRequest $request)
+{
+    $data = $request->validated();
+
+    // Crear orden
+    $order = Order::create($data);
+
+    // Preparar productos para pivot
+    $products = [];
+
+    foreach ($data['products'] as $product) {
+        $products[$product['id']] = [
+            'quantity' => $product['quantity'],
+            'price' => $product['price']
+        ];
     }
 
-    /**
-     * Display the specified resource.
-     */
+    // Insertar en tabla pivot
+    $order->products()->attach($products);
+
+    return new OrderResource($order->load('products', 'client'));
+}
+
     public function show(string $id)
     {
-        //
+        $order = Order::with('client')->findOrFail($id);
+        return new OrderResource($order);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
+    public function update(UpdateOrderRequest $request, string $id)
+{
+    $order = Order::findOrFail($id);
+    $data = $request->validated();
+
+    $order->update($data);
+
+    if (isset($data['products'])) {
+        $products = [];
+
+        foreach ($data['products'] as $product) {
+            $products[$product['id']] = [
+                'quantity' => $product['quantity'],
+                'price' => $product['price']
+            ];
+        }
+
+        $order->products()->sync($products);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    return new OrderResource($order->load('products', 'client'));
+}
+
     public function destroy(string $id)
     {
-        //
+        $order = Order::findOrFail($id);
+        $order->delete();
+        return response()->json(null, 204);
     }
 }

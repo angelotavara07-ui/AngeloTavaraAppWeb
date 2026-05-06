@@ -11,6 +11,14 @@ class Order extends Model
 {
     /** @use HasFactory<\Database\Factories\OrderFactory> */
     use HasFactory;
+    protected $fillable = [
+    'client_id',
+    'order_date',
+    'subtotal',
+    'tax',
+    'total',
+    'status'
+];
     public function client()
 {
     return $this->belongsTo(Client::class);
